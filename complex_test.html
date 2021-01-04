@@ -1,0 +1,98 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+
+<script>
+
+function test(){
+    const LIM = 5;
+    function adjust(z){
+	if (z > LIM)
+	    z = LIM;
+	else if (z < -LIM)
+	    z = -LIM;
+	return z;
+    }
+    for (let r = -4; r < 4; r += 0.1){
+	for (let i = -4; i < 4; i += 0.1){
+	    let a = new comp(r, i);
+	    x_axis.push(r);
+	    y_axis.push(i);
+	    a.log();
+	    let g = a.real; 
+	    let h = a.imag; 
+	    z_axis.push(g);
+	    w_axis.push(h);
+	}
+    }
+}
+
+let x_axis = []
+let y_axis = []
+let z_axis = []
+let w_axis = []
+
+test();
+graph();
+
+function graph(){
+    var f = {
+	x: x_axis,
+	y: y_axis,
+	type: 'scatter',
+	name: 'f(t)'
+    };
+
+    let h = {
+	x: x_axis,
+	y: y_axis,
+	z: z_axis,
+	type: 'scatter3d',
+	mode: 'markers',
+	marker: {size: 1,
+		 color:'rgb(50,200,50)',
+		 opacity: 0.8
+		},
+	name: 'Real'
+    };
+
+    let k = {
+	x: x_axis,
+	y: y_axis,
+	z: w_axis,
+	type: 'scatter3d',
+	mode: 'markers',
+	marker: {size: 1,
+		 color:'rgb(100,50,100)',
+		 opacity: 0.8
+		},
+	name: 'Complex'
+    };
+
+    var data = [h, k];
+
+    var layout = {
+	title: 'GRAPH',
+	scene:{
+	    xaxis: {
+		title: 'Re(z)'
+	    },
+	    yaxis: {
+		title: 'Im(z)'
+	    },
+	    zaxis: {
+		title: 'f(z)',
+		range: [-5, 5]
+	    },
+	}
+    };
+
+    Plotly.newPlot('graph', data, layout);
+}
+
+</script>
+
+    
