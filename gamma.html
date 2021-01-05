@@ -1,0 +1,434 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+
+
+<div id="graph" style="width: 800px; height: 800px;"></div>
+
+<script>
+
+function zabs(z){
+    return Math.sqrt(z.real * z.real + z.imag * z.imag);
+}
+
+
+const PI2 = Math.PI / 2;
+let t_axis = [];
+let f_axis = [];
+let g_axis = [];
+let h_axis = [];
+
+//上野健爾 数学的思考トレーニング解析編 p. 147
+
+function f0(t, z){
+    return t ** (z - 1) * Math.exp(-t);
+}
+
+function simpson(f, z, a, b, n){
+    let h = (b - a) / n;
+    let s = f(a, z) + f(b, z);
+    let s1 = 0;
+    let s2 = 0;
+    for (let i = 1 ; i < n; i += 2){
+	s1 += f(a + h * i, z);
+	s2 += f(a + h * (i + 1), z);
+    }
+    return (s + 4 * s1 + 2 * s2) * h / 3;
+}
+
+function gaussLaguerre(f){
+    const pnt = [0.22284660417926068946,
+		 1.1889321016726230307,
+		 2.9927363260593140777,
+		 5.7751435691045105018,
+		 9.8374674183825899177,
+		 15.982873980601701783];
+    const wei = [0.45896467394996359368,
+		 0.41700083077212099431,
+		 0.11337338207404497573,
+		 0.0103991974531490749,
+		 0.00026101720281493205948,
+		 0.0000008985479064296212385];
+    let ret = 0;
+    for (let i = 0; i < pnt.length; i++){
+	ret += wei[i] * f(pnt[i]);
+    }
+    return ret;
+}
+
+function gamma(z){
+    const LIMIT = 100;
+    const STEP = 0.1;
+    const ESP = 1e-8;
+    let prev = 0, f1;
+    for (let t = 1; t < LIMIT; t += STEP){
+//	f1 = simpson(f, z, 0, t, 100);
+	f1 = gaussLaguerre(f0);
+	if (Math.abs(prev - f1) < ESP)
+	    break;
+	prev = f1;
+    }
+    return f1;
+}
+
+const euler = 0.577215664901532860606512090082402431042159335;
+
+function GammaWeierstrass(x){
+    let ret = Math.exp(-euler * x) / x;
+    const N = 100000;
+    const EPS = 1e-6;
+    for (let k = 1; k < N; k++){
+	ret *= Math.exp(x / k) / (1 + x / k);
+    }
+    return ret;
+}
+
+
+function ft(t, z){
+    let exsht = Math.exp(PI2 * Math.sinh(t));
+    let cst = PI2 * Math.cosh(t);
+    return exsht ** (z - 1) * Math.exp(- exsht) * exsht * cst;
+}
+
+function de(f, z, N, h){
+    let sum = 0;
+    let EPS = 1e-6;
+    let i;
+    for (i = 0; i < N; i++){
+	let term = ft(i * h, z);
+	if (Math.abs(term) < EPS)
+	    break;
+	sum += term;
+    }
+    return [sum * h, i];
+}
+
+
+function gamma_de_run(MAX = 6){
+    for (let z = 1; z < MAX; z += 0.1){
+	t_axis.push(z);
+	let ret = de(ft, z, 100000, 0.01);
+	f_axis.push(Math.log10(ret[0]));
+	g_axis.push(ret[1]);
+    }
+}
+
+//  上野健爾 数学的思考トレーニング複素解析編
+
+function GammaWeierstrassComp(z){
+    let ret = new comp(z.real, z.imag);
+    ret.mul(-euler, 0);
+    ret.exp();
+    ret.divide(z.real, z.imag);
+    const N = 100000;
+    const EPS = 1e-6;
+    let prev = new comp(0, 0);
+    let prod = new comp(1, 0);
+    for (let k = 1; k < N; k++){
+	let zk = new comp(z.real, z.imag);
+	zk.divide(k, 0);
+	let term = new comp(zk.real, zk.imag);
+	term.exp();
+	let div = new comp(1, 0);
+	div.add(zk);
+	term.divide(div);
+	prod.mul(term);
+	if (Math.sqrt((prod.real - prev.real) ** 2 + (prod.imag - prev.imag) ** 2) < EPS)
+	    break;
+	prev.real = prod.real; prev.imag = prod.imag;
+    }
+    ret.mul(prod);
+    return ret;
+}
+
+// p.245 Stirling's formula
+
+function stirling(n){
+    return Math.sqrt(PI2) * n ** (n + 0.5) * Math.exp(-n);
+}
+
+function fact(n){
+    let ret = 1;
+    for (let i = 1; i <= n; i++)
+	ret *= i;
+    return ret;
+}
+
+function GammaProd(x){
+    const N = 10000;
+    const EPS = 1e-6;
+    let ret;
+    let prev = 0;
+    let term = 1 / x;;
+    for (let i = 1; i < N; i++){
+	term *=  i / (x + i);
+	ret = i ** x * term;
+//	writeln(term+","+ret);
+	if (Math.abs(ret - prev) < EPS)
+	    break;
+	prev = ret;
+    }
+    return ret;
+}
+
+function GammaProdComp(z){
+    const N = 10000;
+    const EPS = 1e-6;
+    let ret = new comp(0, 0);
+    let prev = new comp(0, 0);
+    let term = new comp(1, 0);
+    term.div(z.real, z.imag);
+    for (let i = 1; i < N; i++){
+	let term1 = new comp(i, 0);
+	let term2 = new comp(z.real, z.imag);
+	term2.add(i, 0);
+	term1.div(term2);
+	term.mul(term1);
+	let term0 = new comp(i, 0);
+	term0.log();
+	term0.mul(z);
+	term0.exp();
+	term0.mul(term);
+	ret.real = term0.real; ret.imag = term0.imag;
+	let diff = new comp(ret.real, ret.imag);
+	diff.sub(prev);
+	if (zabs(diff) < EPS)
+	    break;
+	prev.real = ret.real; prev.imag = ret.imag;
+    }
+    return ret;
+}
+
+function gamma_run(){
+    const MAX = 30;
+    const STEP = 1;
+    for (let z = 1; z < MAX; z += STEP){
+	let zz = new comp(z, 0);
+	t_axis.push(z);
+	g_axis.push(Math.log(zabs(GammaWeierstrassComp(zz))));
+//	f_axis.push(Math.log(stirling(z-1)));
+//	g_axis.push(Math.log(GammaWeierstrass(z)));
+	f_axis.push(Math.log(zabs(GammaProdComp(zz))));
+
+	
+    }
+}
+
+function gamma_run3D(){
+    const XMAX = 6;
+    const YMAX = 6;
+    const STEP = 0.1;
+    let YSTEP;
+    for (let x = -XMAX; x < XMAX; x += XSTEP){
+	if (x < 0 && Math.abs(x - Math.floor(x)) <= STEP){
+	    XSTEP = STEP / 10;
+	}else{
+	    XSTEP = STEP;
+	}
+	for (let y = -YMAX; y < YMAX; y += YSTEP){
+//	    if (x < 1 && Math.abs(Math.floor(-x) - (-x)) < STEP/2
+//		&& Math.abs(Math.floor(y) - y) < STEP/2)
+	    //		continue;
+	    if (x < 0 && Math.abs(y - Math.floor(y)) <= STEP){
+		YSTEP = STEP / 10;
+	    }else{
+		YSTEP = STEP;
+	    }
+	    let z = new comp(x, y);
+//	    let gg = GammaWeierstrassComp(z);
+	    let gg = GammaLanczos(z);
+//	    let gabs = zabs(gg);
+	    t_axis.push(x);
+	    f_axis.push(y);
+	    g_axis.push(gg.real);
+	    h_axis.push(gg.imag);
+	}
+    }
+}
+
+
+// From https://en.wikipedia.org/wiki/Lanczos_approximation (in Python)
+
+function lanczos(){
+    const p = [676.5203681218851,
+	       -1259.1392167224028,
+	       771.32342877765313,
+	       -176.61502916214059,
+	       12.507343278686905,
+	       -0.13857109526572012,
+	       9.9843695780195716e-6,
+	       1.5056327351493116e-7];
+
+    const EPSILON = 1e-07
+    function drop_imag(z){
+	let y = new comp(z.real, z.imag);
+	if (Math.abs(z.imag) <= EPSILON)
+	    y.imag = 0;
+	return y;
+    }
+    
+    function  gamma(z){
+	let y = new comp(0, 0);
+	if (z.real < 0.5){
+	    let t1 = new comp(Math.PI, 0);
+	    t1.mul(z);
+	    let t2 = new comp(1, 0);
+	    t2.sub(z);
+	    let t3 = gamma(t2);
+	    y.add(Math.PI, 0);
+	    t1.sin();
+	    t1.mul(t3);
+	    y.div(t1);
+	    // y = pi / (sin(pi * z) * gamma(1 - z))  // Reflection formula
+	}else{
+	    z.sub(1, 0);
+	    let x = new comp(0.99999999999980993, 0);
+	    for (let i = 0; i < p.length; i++){
+		let pval = new comp(p[i], 0);
+		let t4 = new comp(i + 1, 0);
+		t4.add(z);
+		pval.div(t4);
+		x.add(pval);
+	        // x += pval / (z + i + 1);
+	    }
+	    let t = new comp(z.real, z.imag);
+	    t.add(p.length - 0.5, 0);
+	    let t5 = new comp(t.real, t.imag);
+	    t5.log();
+	    t5.mul(z.real+0.5, z.imag);
+	    t5.exp();
+	    let t6 = new comp(-t.real, -t.imag);
+	    t6.exp();
+	    t6.mul(x);
+	    t5.mul(t6);
+	    y.real = t5.real; y.imag = t5.imag;
+	    y.mul(Math.sqrt(2 * Math.PI), 0);
+	    // let y = Math.sqrt(2 * pi) * t ** (z + 0.5) * Math.exp(-t) * x
+	}
+	return drop_imag(y);
+    }
+    let u = new comp(1, -1);
+    let g = gamma(u);
+    writeln(g.real+", "+g.imag);
+}
+
+// Make it stand alone
+
+function GammaLanczos(z){
+    const p = [676.5203681218851,
+	       -1259.1392167224028,
+	       771.32342877765313,
+	       -176.61502916214059,
+	       12.507343278686905,
+	       -0.13857109526572012,
+	       9.9843695780195716e-6,
+	       1.5056327351493116e-7];
+    let y = new comp(0, 0);
+    if (z.real < 0.5){
+	let t1 = new comp(Math.PI, 0);
+	t1.mul(z);
+	let t2 = new comp(1, 0);
+	t2.sub(z);
+	let t3 = GammaLanczos(t2);
+	y.add(Math.PI, 0);
+	t1.sin();
+	t1.mul(t3);
+	y.div(t1);
+	// y = pi / (sin(pi * z) * gamma(1 - z))  // Reflection formula
+    }else{
+	z.sub(1, 0);
+	let x = new comp(0.99999999999980993, 0);
+	for (let i = 0; i < p.length; i++){
+	    let pval = new comp(p[i], 0);
+	    let t4 = new comp(i + 1, 0);
+	    t4.add(z);
+	    pval.div(t4);
+	    x.add(pval);
+	    // x += pval / (z + i + 1);
+	}
+	let t = new comp(z.real, z.imag);
+	t.add(p.length - 0.5, 0);
+	let t5 = new comp(t.real, t.imag);
+	t5.log();
+	t5.mul(z.real+0.5, z.imag);
+	t5.exp();
+	let t6 = new comp(-t.real, -t.imag);
+	t6.exp();
+	t6.mul(x)
+	t5.mul(t6);
+	y.real = t5.real; y.imag = t5.imag;
+	y.mul(Math.sqrt(2 * Math.PI), 0);
+	// let y = Math.sqrt(2 * pi) * t ** (z + 0.5) * Math.exp(-t) * x
+    }
+    return y;
+}
+
+
+gamma_run3D();
+//writeln(f_axis);
+graph();
+
+
+function graph(){
+    let f = {
+	x: t_axis,
+	y: f_axis,
+	type: 'scatter',
+	name: 'Prod'
+    };
+
+    let g = {
+	x: t_axis,
+	y: g_axis,
+	type: 'scatter',
+	name: 'Weierstrass'
+    };
+
+    let h = {
+	x: t_axis,
+	y: f_axis,
+	z: g_axis,
+	type: 'scatter3d',
+	mode: 'markers',
+	marker: {size: 1,
+		 color:'rgb(50,200,50)',
+		 opacity: 0.8
+		},
+	name: 'Real'
+    };
+
+    let k = {
+	x: t_axis,
+	y: f_axis,
+	z: h_axis,
+	type: 'scatter3d',
+	mode: 'markers',
+	marker: {size: 1,
+		 color:'rgb(200,50,100)',
+		 opacity: 0.8
+		},
+	name: 'Imag'
+    };
+
+    let data = [h, k];
+
+    let layout = {
+	title: 'Γ(z)',
+	scene:{
+	    xaxis: {
+		title: 'Re(z)'
+	    },
+	    yaxis: {
+		title: 'Im(z)'
+	    },
+	    zaxis: {
+		title: 'Γ(z)',
+		range: [-100, 100]
+	    },
+	}
+    };
+
+    Plotly.newPlot('graph', data, layout);
+}
+</script>
