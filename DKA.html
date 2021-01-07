@@ -1,0 +1,181 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="utils.js"></script>
+<script type="text/javascript" src="complex.js"></script>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+
+// Constants and Variables
+
+const NMAX = 100;
+const PI = Math.PI;
+const EPS = 1e-10
+let a = [];
+let c = [];
+let zr = [];
+let zi = [];
+for (let i = 0; i < NMAX; i++){
+    zr[i] = [];
+    zi[i] = [];
+}
+let z1r = [];
+let z1i = [];
+
+let r_axis = [];
+let i_axis = [];
+let e_axis = [];
+
+// Equation definition
+
+a = [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, -2, 0, 8, 0, 5, 0, 4, 0, -1];
+const n = a.length - 1;
+const n1 = n - 1;
+const r = 50;
+
+// calculation of qn(x)
+
+function q(zr, zi){
+    let r = new comp(0,0);
+    let x = new comp(1,0);
+    for (let i = n1; i >= 0; i--){
+	let t = new comp(c[i],0);
+	t.mul(x);
+	r.add(t);
+	x.mul(zr, zi);
+    }
+    r.add(x);
+    return r;
+}
+
+// calcuation of c[i]
+
+for (let i = 0; i < n; i++){
+    c[i] = a[i + 1]/a[0];
+}
+
+// Initial values
+
+for (let i = 0; i < n; i++){
+    let t1 = new comp(0, ((2 * i * PI) / n) + 3 / (2 * n));
+    t1.exp();
+    t1.mul(r, 0);
+    t1.add(-c[0]/n,0);
+    zr[i][0] = t1.real;
+    zi[i][0] = t1.imag;
+}
+
+// Iteration
+
+let count = 0;
+let e = 0;
+do{
+    for (let i = 0; i < n; i++){
+	let d = new comp(1, 0);
+	for (let j = 0; j < n; j++){
+	    if (i == j) continue;
+	    let dd = new comp(zr[i][count], zi[i][count]);
+	    dd.sub(zr[j][count], zi[j][count]);
+	    d.mul(dd.real, dd.imag);
+	}
+	let t0 = q(zr[i][count], zi[i][count]);
+	let t1 = new comp(t0.real, t0.imag);
+	t1.div(d);
+	let t2 = new comp(zr[i][count], zi[i][count]);
+	t2.sub(t1);
+	z1r[i] = t2.real;
+	z1i[i] = t2.imag;
+    }
+    e = 0;
+    for (let i = 0; i < n; i++){
+	e += (z1r[i]-zr[i][count])**2+(z1i[i]-zi[i][count])**2;
+	zr[i][count+1] = z1r[i];
+	zi[i][count+1] = z1i[i];
+//	r_axis.push(zr[i][count]);
+//	i_axis.push(zi[i][count]);
+    }
+    e = Math.sqrt(e);
+}while (e > EPS && count++ < NMAX)
+
+// output the equation
+writeln("the equation is:");
+for (let i = 0; i < n - 1; i++){
+    if (a[i] != 0){
+	if (i > 0)
+	    if (a[i] > 0)
+		write("+");
+	if (a[i] == 1)
+	    write("x^"+(n - i));
+	else if (a[i] == -1)
+	    write("-x^"+(n - i));
+	else
+	    write(a[i]+"x^"+(n - i));
+    }
+}
+writeln(a[n-1]);
+
+// output roots
+
+writeln("solved roots are:");
+for (let i = 0; i < n; i++){
+    document.write("z["+i+"]= "+zr[i][count-1]);
+    if (zi[i][count-1] < 0)
+	document.write(" "+zi[i][count-1]+" i <br>");
+    else
+	document.write(" +"+zi[i][count-1]+" i <br>");
+}
+
+document.write("e = ", e, "  count = ", count, "<br>");
+
+for (let j = 0; j < n; j++){
+    let exar = zr[j][count-1];
+    let exai = zi[j][count-1];
+    for (let i = 0; i < count; i++){
+	let error = (exar - zr[j][i]) ** 2 + (exai - zi[j][i]) ** 2;
+	r_axis.push(zr[j][i]);
+	i_axis.push(zi[j][i]);
+	e_axis.push(error);
+    }
+}
+
+
+let h2 = {
+    x: r_axis,
+    y: i_axis,
+    z: e_axis,
+    type: 'scatter3d',
+    mode: 'markers',
+    marker: {size: 1,
+	     color:'rgb(200,50,100)',
+	     opacity: 0.8
+	    },
+    name: 'convergence'
+};
+
+let data = [h2];
+
+let layout = {
+    title: 'DKA',
+    scene:{
+	xaxis: {
+	    title: 'real',
+	    range:[-5, 5],
+	    autorage: true
+	},
+	yaxis: {
+	    title: 'imaginary',
+	    range:[-5, 5],
+	    autorage: true
+	},
+	zaxis: {
+	    title: 'error',
+	    range:[0, 10],
+	    autorage: true
+	},
+    }
+};
+
+Plotly.newPlot('graph', data, layout);
+
+</script>
