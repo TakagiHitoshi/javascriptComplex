@@ -29,7 +29,7 @@ let e_axis = [];
 
 // Equation definition
 
-a = [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, -2, 0, 8, 0, 5, 0, 4, 0, -1];
+a = [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, -2, 0, 8, 0, 5, 0, 4, -2, -1];
 const n = a.length - 1;
 const n1 = n - 1;
 const r = 50;
@@ -100,20 +100,22 @@ do{
 
 // output the equation
 writeln("the equation is:");
-for (let i = 0; i < n - 1; i++){
+for (let i = 0; i < n; i++){
     if (a[i] != 0){
 	if (i > 0)
 	    if (a[i] > 0)
 		write("+");
 	if (a[i] == 1)
-	    write("x^"+(n - i));
+	    write("x^");
 	else if (a[i] == -1)
-	    write("-x^"+(n - i));
+	    write("-x^");
 	else
-	    write(a[i]+"x^"+(n - i));
+	    write(a[i]+"x^");
+	if ((n - i) > 2)
+	    write((n - i));
     }
 }
-writeln(a[n-1]);
+writeln(a[n]);
 
 // output roots
 
@@ -179,3 +181,4 @@ let layout = {
 Plotly.newPlot('graph', data, layout);
 
 </script>
+
