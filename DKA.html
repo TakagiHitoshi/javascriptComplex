@@ -106,13 +106,13 @@ for (let i = 0; i < n; i++){
 	    if (a[i] > 0)
 		write("+");
 	if (a[i] == 1)
-	    write("x^");
+	    write("x");
 	else if (a[i] == -1)
-	    write("-x^");
+	    write("-x");
 	else
-	    write(a[i]+"x^");
-	if ((n - i) > 2)
-	    write((n - i));
+	    write(a[i]+"x");
+	if ((n - i) > 1)
+	    write("^"+(n - i));
     }
 }
 writeln(a[n]);
@@ -181,4 +181,3 @@ let layout = {
 Plotly.newPlot('graph', data, layout);
 
 </script>
-
