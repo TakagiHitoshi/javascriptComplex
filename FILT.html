@@ -1,0 +1,126 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="utils.js"></script>
+<script src="complex.js"></script>
+
+<div>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+Inverse Laplace Transform : \(L^{-1}[\frac{s^2}{s^3 - a^3}]\)
+</div>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<script>
+    
+// Fast Inverse Laplace Transform by Hosono's method
+// https://www.jstage.jst.go.jp/article/ieejfms1972/99/10/99_10_494/_pdf/-char/ja
+
+const sigma0 = 5;
+const NMAX = 100;
+
+// The function to be transformed
+
+function func(real, imag, a){
+    let aa = a ** 3;
+    let s3 = new comp(real, imag);
+    s3.mul(real, imag);
+    let s2 = new comp(s3.real, s3.imag);
+    s3.mul(real, imag);
+    let r = new comp(3, 0);
+    r.mul(s2);
+    s3.sub(aa, 0);
+    r.div(s3)
+    return r;
+}
+
+
+// START
+
+let t_data = [];
+let x_data = [];
+let a_data = [];
+
+// Time step
+const TMAX = 5;
+const TSTEP = 0.01;  
+const AMIN = -5;
+const AMAX = 5;
+const ASTEP = 0.1;
+
+for (let a = AMIN; a < AMAX; a += ASTEP){
+    
+    for (let t = 0; t < TMAX; t += TSTEP){
+
+	// Iteration
+
+	let s = 0;
+	let sign = -1;
+	for ( let i = 1; i < NMAX; i++){
+	    s +=  sign * func(sigma0/t, (i - 0.5) * Math.PI/t, a).imag;
+	    sign = -sign;
+	}
+	
+	// Euler's sum
+
+	let fk = sign * func(sigma0/t, (NMAX - 0.5) * Math.PI/t, a).imag;
+	let fk1 = -sign * func(sigma0/t, (NMAX + 1 - 0.5) * Math.PI/t, a).imag;
+	let fk2 = sign * func(sigma0/t, (NMAX + 2 - 0.5) * Math.PI/t, a).imag;
+	let fk3 = -sign * func(sigma0/t, (NMAX + 3 - 0.5) * Math.PI/t, a).imag;
+	let fk4 = sign * func(sigma0/t, (NMAX + 4 - 0.5) * Math.PI/t, a).imag;
+	s += (31 * fk + 26 * fk1 + 16 * fk2 + 6 * fk3 + fk4)/32;
+	
+	// Yielding the Result
+	
+	let fect = Math.exp(sigma0)/t * s;
+	
+	t_data.push(t);
+	a_data.push(a);
+	x_data.push(fect);
+	
+//	writeln(parseFloat(t).toFixed(1) + ", " + fect);
+    }
+}
+
+    
+    
+  // DONE
+
+let h2 = {
+    x: t_data,
+    y: a_data,
+    z: x_data,
+    type: 'scatter3d',
+    mode: 'markers',
+    marker: {size: 1,
+	     color:'rgb(200,50,100)',
+	     opacity: 0.8
+	    },
+    name: 'f(t)'
+};
+
+let data = [h2];
+
+let layout = {
+    title: 'FILT',
+    scene:{
+	xaxis: {
+	    title: 't',
+	    range:[0, 5],
+	    autorage: true
+	},
+	yaxis: {
+	    title: 'a',
+	    range:[-5, 5],
+	    autorage: true
+	},
+	zaxis: {
+	    title: 'f(t)',
+	    range:[-10, 10],
+	    autorage: true
+	},
+    }
+};
+
+Plotly.newPlot("graph", data, layout);
+
+</script>
