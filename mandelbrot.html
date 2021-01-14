@@ -1,0 +1,115 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+
+<div id="graph1" style="width: 800px; height: 600px;"></div>
+<div id="graph2" style="width: 800px; height: 600px;"></div>
+
+<script>
+
+const N = 50;
+/*
+const ACENTER = -0.74364990;
+const BCENTER = 0.13188204;
+const CCENTER = 0.13188204;
+const DIAMETER = 0.00073801;
+const AMAX = ACENTER + DIAMETER;
+const AMIN = ACENTER - DIAMETER;
+const ASTEP = DIAMETER / 50;
+const BMAX = BCENTER + DIAMETER;
+const BMIN = BCENTER - DIAMETER;
+const BSTEP = ASTEP;;
+*/
+const AMAX = 1.5;
+const AMIN = -AMAX
+const ASTEP = 0.01;
+const BMAX = 1.5;
+const BMIN = -BMAX
+const BSTEP = ASTEP;
+let x_axis = [];
+let y_axis = [];
+let z_axis = [];
+
+
+for (let a = AMIN; a < AMAX; a += ASTEP){
+    for (let b = BMIN; b < BMAX; b += BSTEP){
+	let x0 = 0;
+	let y0 = 0;
+	for (let i = 0; i < N; i++){
+	    let x1 = x0 * x0 - y0 * y0 + a;
+	    let y1 = 2 * x0 * y0 + b;
+	    let z1 = x1 * x1 + y1 * y1;
+	    if (z1 > 4){
+		x_axis.push(a);
+		y_axis.push(b);
+		z_axis.push(Math.sqrt(z1));
+		break;
+	    }
+	    x0 = x1; y0 = y1; 
+	}
+    }
+}
+
+let f1 = {
+    x: x_axis,
+    y: y_axis,
+    type: 'scatter',
+    mode: 'markers',
+    name: 'mandelbort'
+};
+
+let data1 = [f1];
+
+let layout1 = {
+  title: 'Mandelbrot Set',
+  xaxis: {
+    range: [-1.5, 1.5],
+    autorange: true
+  },
+  yaxis: {
+    range: [-1.5, 1.5],
+    autorange: true
+  }
+};
+
+let f2 = {
+    x: x_axis,
+    y: y_axis,
+    z: z_axis,
+    type: 'scatter3d',
+    mode: 'markers',
+    marker: {size: 1,
+	     color:z_axis,
+	     opacity: 0.8,
+	     colorscale: 'Viridis'
+	    },
+    name: 'mandelbrot'
+};
+
+let data2 = [f2];
+
+let layout2 = {
+    title: 'Mandelbrot 3D',
+    scene:{
+	xaxis: {
+	    title: 'x',
+	    range:[-1.5, 1.5],
+	    autorage: true
+	},
+	yaxis: {
+	    title: 'y',
+	    range:[-1.5, 1.5],
+	    autorage: true
+	},
+	zaxis: {
+	    title: 'z',
+	    range:[0, 10],
+	    autorage: true
+	},
+    }
+};
+
+Plotly.newPlot('graph2', data1, layout1);
+Plotly.newPlot('graph1', data2, layout2);
+
+</script>
