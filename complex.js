@@ -1,3 +1,5 @@
+<!---*-Mode:javascript;-*--->
+
 // Complex number and operations
 
 let comp = function(real, imag){
@@ -36,10 +38,11 @@ comp.prototype = {
 	}else{
 	    mreal = real; mimag = imag;
 	}
-	let common_divisor = mreal**2 + mimag**2;
+	let common_divisor = mreal * mreal + mimag * mimag;
 	let treal = this.real; let timag = this.imag;
 	this.real = (mreal * treal + mimag * timag) / common_divisor;
-	this.imag = (mreal * timag - mimag * treal) / common_divisor;},
+	this.imag = (mreal * timag - mimag * treal) / common_divisor;
+    },
     sqrt: function(){
 	let treal = this.real; let timag = this.imag;
 	let r = Math.sqrt(treal*treal+timag*timag);
@@ -66,6 +69,15 @@ comp.prototype = {
 	let theta = Math.atan2(timag,treal);
 	this.real = Math.log(r);
 	this.imag = theta;},
+    pow: function(real, imag){
+	if (real instanceof comp){
+	    this.log();
+	    this.mul(y);
+	}else{
+	    this.log();
+	    this.mul(real, imag);
+	}
+	return this.exp();},
     print: function(){
 	if (this.imag >= 0)
 	    write("{"+this.real+"+"+this.imag+"i)");
@@ -79,3 +91,4 @@ comp.prototype = {
 	    writeln("{"+this.real+"-"+this.imag+"i)");
     }
 }
+
