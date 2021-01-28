@@ -1,0 +1,186 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+
+
+<div id="graph" style="width: 800px; height: 800px;"></div>
+
+<script>
+
+const PI2 = Math.PI / 2;
+let t_axis = [];
+let f_axis = [];
+let g_axis = [];
+let h_axis = [];
+
+// ランチョスの方法
+// From https://en.wikipedia.org/wiki/Lanczos_approximation (in Python)
+
+function GammaLanczos(z){
+    const p = [676.5203681218851,
+	       -1259.1392167224028,
+	       771.32342877765313,
+	       -176.61502916214059,
+	       12.507343278686905,
+	       -0.13857109526572012,
+	       9.9843695780195716e-6,
+	       1.5056327351493116e-7];
+    let y = new comp(0, 0);
+    if (z.real < 0.5){
+	let t1 = new comp(Math.PI, 0);
+	t1.mul(z);
+	let t2 = new comp(1, 0);
+	t2.sub(z);
+	let t3 = GammaLanczos(t2);
+	y.add(Math.PI, 0);
+	t1.sin();
+	t1.mul(t3);
+	y.div(t1);
+	// y = pi / (sin(pi * z) * gamma(1 - z))  // Reflection formula
+    }else{
+	z.sub(1, 0);
+	let x = new comp(0.99999999999980993, 0);
+	for (let i = 0; i < p.length; i++){
+	    let pval = new comp(p[i], 0);
+	    let t4 = new comp(i + 1, 0);
+	    t4.add(z);
+	    pval.div(t4);
+	    x.add(pval);
+	    // x += pval / (z + i + 1);
+	}
+	let t = new comp(z.real, z.imag);
+	t.add(p.length - 0.5, 0);
+	let t5 = new comp(t.real, t.imag);
+	t5.log();
+	t5.mul(z.real+0.5, z.imag);
+	t5.exp();
+	let t6 = new comp(-t.real, -t.imag);
+	t6.exp();
+	t6.mul(x)
+	t5.mul(t6);
+	y.real = t5.real; y.imag = t5.imag;
+	y.mul(Math.sqrt(2 * Math.PI), 0);
+	// let y = Math.sqrt(2 * pi) * t ** (z + 0.5) * Math.exp(-t) * x
+    }
+    return y;
+}
+
+function Gamma(x){
+    let R;
+    ret = new comp(1, 0);
+    if (x instanceof comp){
+	z = x;
+	R = false;
+    }else{
+	z = new comp(x, 0);
+	R = true;
+    }
+    if (z.real > 1){
+	while (z.real > 1){
+	    z.sub(1, 0);
+	    ret.mul(z);
+	}
+    }else if (z.real < 0){
+	while (z.real < 0){
+	    ret.div(z);
+	    z.add(1, 0);
+	}
+    }
+    if (R)
+	return GammaLanczos(z).real * ret.real;
+    else{
+	let ret1 = GammaLanczos(z);
+	ret1.mul(ret);
+	return ret1;
+    }
+}
+
+function gamma_run3D(){
+    const XMAX = 6;
+    const YMAX = 6;
+    const STEP = 0.1;
+    let YSTEP;
+    for (let x = -XMAX; x < XMAX; x += XSTEP){
+	if (x < 0 && Math.abs(x - Math.floor(x)) <= STEP){
+	    XSTEP = STEP / 10;
+	}else{
+	    XSTEP = STEP;
+	}
+	for (let y = -YMAX; y < YMAX; y += YSTEP){
+	    if (x < 1 && Math.abs(Math.floor(-x) - (-x)) < STEP/2
+		&& Math.abs(Math.floor(y) - y) < STEP/2)
+		continue;
+	    if (x < 0 && Math.abs(y - Math.floor(y)) <= STEP){
+		YSTEP = STEP / 10;
+	    }else{
+		YSTEP = STEP;
+	    }
+	    let z = new comp(x, y);
+	    let gg = Gamma(z);	    
+	    t_axis.push(x);
+	    f_axis.push(y);
+	    g_axis.push(gg.real);
+	    h_axis.push(gg.imag);
+	}
+    }
+}
+		    
+gamma_run3D();
+graph3D();
+
+function graph3D(){
+    let h = {
+	x: t_axis,
+	y: f_axis,
+	z: g_axis,
+	type: 'scatter3d',
+	mode: 'lines',
+	marker: {size: 1,
+		 color:'rgb(50,200,50)',
+		 opacity: 0.8
+		},
+	name: 'Real'
+    };
+
+    let k = {
+	x: t_axis,
+	y: f_axis,
+	z: h_axis,
+	type: 'scatter3d',
+	mode: 'lines',
+	marker: {size: 1,
+		 color:'rgb(200,50,100)',
+		 opacity: 0.8
+		},
+	name: 'Imag'
+    };
+
+    let data = [h, k];
+
+    let layout = {
+	title: 'Γ(z)',
+	scene:{
+	    xaxis: {
+		title: 'Re(z)'
+	    },
+	    yaxis: {
+		title: 'Im(z)'
+	    },
+	    zaxis: {
+		title: 'Γ(z)',
+		range: [-100, 100]
+	    },
+	    camera: {
+		eye: {
+                    x: -0.8,
+                    y: 0.8,
+                    z: 0.5
+		}
+            }
+   	}
+    };
+
+    Plotly.newPlot('graph', data, layout);
+}
+</script>
