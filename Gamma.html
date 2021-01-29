@@ -17,7 +17,7 @@ let h_axis = [];
 // ランチョスの方法
 // From https://en.wikipedia.org/wiki/Lanczos_approximation (in Python)
 
-function GammaLanczos(z){
+function Gamma(x){
     const p = [676.5203681218851,
 	       -1259.1392167224028,
 	       771.32342877765313,
@@ -26,27 +26,37 @@ function GammaLanczos(z){
 	       -0.13857109526572012,
 	       9.9843695780195716e-6,
 	       1.5056327351493116e-7];
-    let y = new comp(0, 0);
-    if (z.real < 0.5){
-	let t1 = new comp(Math.PI, 0);
-	t1.mul(z);
-	let t2 = new comp(1, 0);
-	t2.sub(z);
-	let t3 = GammaLanczos(t2);
-	y.add(Math.PI, 0);
-	t1.sin();
-	t1.mul(t3);
-	y.div(t1);
-	// y = pi / (sin(pi * z) * gamma(1 - z))  // Reflection formula
+    let R;
+    let ret = new comp(1, 0);
+    if (x instanceof comp){
+	z = x;
+	R = false;
     }else{
+	z = new comp(x, 0);
+	R = true;
+    }
+    if (z.real > 2){
+	let z1 = new comp(z.real, z.imag);
+	z1.sub(1, 0);
+	let t = new comp(z1.real, z1.imag)
+	ret = Gamma(z1);
+	ret.mul(t)
+    }else if (z.real < 1){
+	let z1 = new comp(z.real, z.imag);
+	z1.add(1, 0);
+	let t = new comp(z1.real, z1.imag)
+	ret = Gamma(z1);
+	ret.div(t)
+    }else{
+	ret = new comp(0, 0);
 	z.sub(1, 0);
-	let x = new comp(0.99999999999980993, 0);
+	let X = new comp(0.99999999999980993, 0);
 	for (let i = 0; i < p.length; i++){
 	    let pval = new comp(p[i], 0);
 	    let t4 = new comp(i + 1, 0);
 	    t4.add(z);
 	    pval.div(t4);
-	    x.add(pval);
+	    X.add(pval);
 	    // x += pval / (z + i + 1);
 	}
 	let t = new comp(z.real, z.imag);
@@ -57,42 +67,16 @@ function GammaLanczos(z){
 	t5.exp();
 	let t6 = new comp(-t.real, -t.imag);
 	t6.exp();
-	t6.mul(x)
+	t6.mul(X)
 	t5.mul(t6);
-	y.real = t5.real; y.imag = t5.imag;
-	y.mul(Math.sqrt(2 * Math.PI), 0);
+	ret.real = t5.real; ret.imag = t5.imag;
+	ret.mul(Math.sqrt(2 * Math.PI), 0);
 	// let y = Math.sqrt(2 * pi) * t ** (z + 0.5) * Math.exp(-t) * x
     }
-    return y;
-}
-
-function Gamma(x){
-    let R;
-    ret = new comp(1, 0);
-    if (x instanceof comp){
-	z = x;
-	R = false;
-    }else{
-	z = new comp(x, 0);
-	R = true;
-    }
-    if (z.real > 1){
-	while (z.real > 1){
-	    z.sub(1, 0);
-	    ret.mul(z);
-	}
-    }else if (z.real < 0){
-	while (z.real < 0){
-	    ret.div(z);
-	    z.add(1, 0);
-	}
-    }
     if (R)
-	return GammaLanczos(z).real * ret.real;
+	return ret.real;
     else{
-	let ret1 = GammaLanczos(z);
-	ret1.mul(ret);
-	return ret1;
+	return ret;
     }
 }
 
