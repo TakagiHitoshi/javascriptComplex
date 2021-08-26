@@ -1,0 +1,123 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+
+<div id="graph" style="width: 800px; height: 600px;"></div>
+
+<div>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+\(z^{3.8} - 1 = 0 \)
+
+</div>
+
+<script>
+// Newton-Raphson Fractal
+
+let NAME = "";
+let x_axis = [];
+let y_axis = [];
+let z_axis = [];
+let x = 0;
+let y = 0;
+
+
+// z^3 - 1 = 0
+function equZ3(x, y){
+    let c = new comp(x, y);
+    c.mul(x, y);
+    c.mul(x, y);
+    c.sub(1, 0);
+    return c.abs();
+}
+
+function diffZ3(x, y){
+    let c = new comp(x, y);
+    c.mul(x, y);
+    let d = new comp(c.real, c.imag);
+    c.mul(x, y);
+    c.mul(2, 0);
+    c.add(1, 0);
+    d.mul(3, 0);
+    c.div(d);
+    return c;
+}
+
+// z^3.8 - 1 = 0
+function equZ38(x, y){
+    let c = new comp(x, y);
+    c.log();
+    c.mul(3.8, 0);
+    c.exp();
+    c.sub(1, 0);
+    return c.abs();
+}
+
+function diffZ38(x, y){
+    let c = new comp(x, y);
+    c.log();
+    let d = new comp(c.real, c.imag);
+    c.mul(3.8, 0);
+    d.mul(2.8, 0);
+    c.exp();
+    d.exp();
+    c.sub(1, 0);
+    d.mul(3.8, 0);
+    c.div(d);
+    let e = new comp(x, y);
+    e.sub(c)
+    return e;
+}
+
+function NewtonRaphson(N = 10, MAX = 2, DIV = 100, EPS = 1e-6){
+    const STEP = MAX / DIV;
+    NAME = "Newton-Raphson Fractal";
+    for (let x0 = -MAX; x0 < MAX; x0 += STEP){
+	for (let y0 = -MAX; y0 < MAX; y0 += STEP){
+	    let x = x0, y = y0;
+	    let i;
+	    for (i = 0; i < N; i++){
+		let z0 = diffZ38(x, y);
+		x = z0.real, y = z0.imag;
+		if (equZ38(x, y) < EPS)
+		    break;
+	    }
+	    if (i < N - 1){
+		x_axis.push(x0); y_axis.push(y0); z_axis.push(i);
+	    }
+	}
+    }
+}
+    
+NewtonRaphson(50);
+
+let f = {
+    x: x_axis,
+    y: y_axis,
+    type: 'scatter',
+    mode: 'markers',
+    marker:{
+	size: 3,
+	color: z_axis,
+	colorscale: 'Rainbow'
+    },
+    name: 'curve'
+};
+
+let data = [f];
+
+let layout = {
+    title: NAME,
+    xaxis: {
+	range: [0, 10],
+	autorange: true
+    },
+    yaxis: {
+	range: [-1, 1],
+	autorange: true
+    }
+};
+
+Plotly.newPlot('graph', data, layout);
+</script>
