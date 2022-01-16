@@ -59,7 +59,7 @@ function drawTime(ctx, H){
         ctx.lineTo(H2, (1 - second / 65)*H*0.9);
         ctx.stroke();
     }
-    if (weather == '' ||  minute == 0)
+    if (weather == '' ||  (minute == 0 && second == 0))
         getJSON(ctx, H, hour, second);
     dispWeather(weather, temps, pops, H, hour, second);
 }  
@@ -85,7 +85,7 @@ function drawTimeTJ(ctx, H){
     const time = zeropad(hour)+"時"+minutest;
     ctx.font = "bold " + H*0.33 + "px arial";
     ctx.fillText(time, W/2, H*0.52);
-    if (weather == '' ||  minute == 0)
+    if (weather == '' ||  (minute == 0 && second == 0))
         getJSON(ctx, H, hour, second);
     dispWeather(weather, temps, pops, H, hour, second);
  }  
