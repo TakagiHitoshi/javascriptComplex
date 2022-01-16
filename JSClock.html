@@ -65,11 +65,11 @@ function drawTime(ctx, H){
 }  
 
 function drawTimeTJ(ctx, H){
-    var now = new Date();
-    var hour = now.getHours();
-    var minute = now.getMinutes();
-    var second = now.getSeconds();
-    var minutest = '';
+    let now = new Date();
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+    let second = now.getSeconds();
+    let minutest = '';
     if (minute == 0)
         minutest = '丁度';
     else if (minute > 1 && minute < 29)
@@ -82,7 +82,7 @@ function drawTimeTJ(ctx, H){
         minutest = '前後';
         if (minute > 50) hour = (hour + 1) % 24;
     }
-    var time = zeropad(hour)+"時"+minutest;
+    let time = zeropad(hour)+"時"+minutest;
     ctx.font = "bold " + H*0.33 + "px arial";
     ctx.fillText(time, W/2, H*0.52);
     if (weather == '' ||  minute == 0)
