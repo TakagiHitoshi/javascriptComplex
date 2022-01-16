@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<body>
+<canvas id="canvas" width="160" height="80"
+style="background-color:#08f">
+</canvas>
+
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let H = canvas.height;
+let W = canvas.width;
+let weather = '';
+let temps = '';
+let pops = '';
+const week = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const zeropad = (num) => {return ( '00' + num ).slice( -2 );};
+    
+function onMouseOver(){
+    ctx.clearRect(0, 0, W, H);
+    drawTime(ctx, H);
+}
+    
+canvas.addEventListener('mouseover', onMouseOver, false);
+
+setInterval(drawClock, 1000);
+
+function drawClock() {
+    ctx.clearRect(0, 0, W, H);
+    drawFace(ctx, H);
+    drawTimeTJ(ctx, H);
+}
+
+function drawFace(ctx, H) {
+    ctx.font = H*0.23 + "px arial";
+    let H1 = H * 0.23;
+    let date = new Date();
+    let datest = (date.getMonth() + 1).toString()+"/"+date.getDate().toString();
+    ctx.textAlign="center";
+    ctx.fillText(datest, W*0.15, H1);
+    datest = date.getDay();
+    ctx.fillText(week[datest], W*0.8, H1);
+    ctx.fill();
+}
+
+function drawTime(ctx, H){
+    let now = new Date();
+    let hour = now.getHours();
+    let minute = now.getMinutes();
+    let second = now.getSeconds();
+    let time = zeropad(hour)+":"
+               +zeropad(minute);
+    ctx.font = "bold "+H*0.5 + "px arial";
+    ctx.fillText(time, W*0.5, H*0.52);
+    let H2 = W*0.03;
+    if (second % 2 == 0){
+        ctx.beginPath();
+        ctx.moveTo(H2, H*0.9);
+        ctx.lineTo(H2, (1 - second / 65)*H*0.9);
+        ctx.stroke();
+    }
+    if (weather == '' ||  minute == 0)
+        getJSON(ctx, H, hour, second);
+    dispWeather(weather, temps, pops, H, hour, second);
+}  
+
+function drawTimeTJ(ctx, H){
+    var now = new Date();
+    var hour = now.getHours();
+    var minute = now.getMinutes();
+    var second = now.getSeconds();
+    var minutest = '';
+    if (minute == 0)
+        minutest = '丁度';
+    else if (minute > 1 && minute < 29)
+        minutest = '前半';
+    else if (minute >= 29 && minute <= 31)
+        minutest = '半頃';
+    else if(minute > 31 && minute < 59)
+        minutest = '後半';
+    else{
+        minutest = '前後';
+        if (minute > 50) hour = (hour + 1) % 24;
+    }
+    var time = zeropad(hour)+"時"+minutest;
+    ctx.font = "bold " + H*0.33 + "px arial";
+    ctx.fillText(time, W/2, H*0.52);
+    if (weather == '' ||  minute == 0)
+        getJSON(ctx, H, hour, second);
+    dispWeather(weather, temps, pops, H, hour, second);
+ }  
+    
+function Replace(s){
+    const ret = s.replace(/昼過ぎ　|夜　|夕方　|後　|午後　|から　/, '→')
+//	  .replace('まで　', '←')
+	  .replace('時々', '|')
+	  .replace('所により', '/')
+	  .replace('晴れ', '☀')
+	  .replace('くもり', '☁')
+	  .replace('雨', '☔')
+	  .replace('雷', '☇')
+	  .replace('雪', '☃')
+	  .replace(/[\u3041-\u3096々〇〻\u3400-\u9FFF\uF900-\uFAFF\uD840-\uD87F\uDC00-\uDFFF]+/g, '')
+	  .replace(/　/ig, '');
+    return ret;
+}
+
+// 気象庁のAPIから予報を取得
+function getJSON(ctx, H, hour, second) {
+    let req = new XMLHttpRequest();
+    req.onreadystatechange = function() {	
+	if(req.readyState == 4 && req.status == 200){
+	    const jason = req.responseText.substr(1, req.responseText.length-2);
+	    const H1 = jason.indexOf('publishingOffice', 10);
+	    const jason1 = jason.slice(0, H1-3);
+	    const obj = JSON.parse(jason1);
+	    const TS = obj.timeSeries;
+	    const TD = TS[0].areas;
+	    const WE0 = TD[0].weathers;
+        const TT = TS[2].areas[0].temps;
+        const PO = TS[1].areas[0].pops;
+        weather = WE0;
+        temps = TT;
+        pops = PO;
+    }
+  };
+    // URLを指定
+    req.open("GET", "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json", false); 
+    req.send(null);// サーバーへリクエストを送信
+}
+
+function dispWeather(WE0, TT, PO, H, hour, second){
+    ctx.font = H*0.2 + "px arial";
+    ctx.fillText(Replace(WE0[0], hour), W*0.25, H*0.75);
+    ctx.fillText(Replace(WE0[1], hour), W*0.7, H*0.75);
+    ctx.font = H*0.15 + "px arial";
+    if (second - Math.floor(second/10)*10 < 5){
+        ctx.fillText("℃", W*0.1, H*0.9);
+        for (let i = 0; i < TT.length; i++)
+            ctx.fillText(TT[i], W*(0.2*(5-TT.length)+i*0.2), H*0.9);
+     }else{
+         ctx.fillText("%", W*0.08, H*0.9);
+         for (let i = 0; i < Math.min(6, PO.length); i++)
+             ctx.fillText(PO[i], W*(0.2+i*0.15), H*0.9);
+     }
+}
+
+    
+    
+</script>
+
+</body>
+</html>
