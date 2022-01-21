@@ -1,0 +1,55 @@
+<!---*-Mode:javascript;-*--->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script type="text/javascript" src="./complex.js"></script>
+
+<script>
+// Simpson Integral on Complex Plain
+
+// log z = \int_{1}^{z} \frac{1}{z} dz
+function f1(z){
+    let ret = new comp(1, 0);
+    ret.div(z)
+    return ret;
+}
+
+function simpsonPath(f, path){
+    const n = path.length;
+    let s = new comp(0, 0);
+    for (let i = 1 ; i < n; i++){
+	let fa = f(path[i - 1]);
+	let fb = f(path[i]);
+	let ba = new comp(path[i]);
+	ba.sub(path[i - 1]);
+	ba.div(6, 0);
+	let ab = new comp(path[i-1].real, path[i-1].imag);
+	ab.add(path[i]);
+	ab.div(2, 0);
+	let fm = f(ab);
+	fm.mul(4, 0);
+	fa.add(fb);
+	fa.add(fm);
+	fa.mul(ba);
+	s.add(fa);
+    }
+    return s;
+}
+
+function testPole(){
+    const r = 1;
+    const N = 1000;
+    const STEP = Math.PI*2/N;
+    let path = [];
+    for (let th = 0; th < Math.PI*2; th += STEP){
+	let step = new comp(r*Math.cos(th), r*Math.sin(th));
+	path.push(step);
+    }
+    let sum = new comp(simpsonPath(f1, path));
+    writeln(sum.real+", "+sum.imag);   // should be 0 + i * 2 * PI
+}
+
+
+testPole();
+
+</script>
+
