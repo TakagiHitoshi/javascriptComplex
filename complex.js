@@ -3,8 +3,11 @@
 // Complex number and operations
 
 let comp = function(real, imag){
-    this.real = real;
-    this.imag = imag;
+    if (real instanceof comp){
+	this.real = real.real; this.imag = real.imag;
+    }else{
+	this.real = real; this.imag = imag;
+	}
 };
 comp.prototype = {
     add: function(real, imag) {
