@@ -2,18 +2,21 @@
 javascrip complex number calculation library
 
 ## Instantiation:
+```
 let a = new complex(1, 1);
 let b = new complex(2); // imaginary part assumed to be zero
-
+```
 ## Computation Examples:
+```
 a = a + b;
-a.add(b);
+=> a.add(b);
 a = a * 2 + b * 3;
-a.mul(2).push().add(b).mul(3).add(); // can be written a.mul(2,0).push().add(b).mul(3,0).add()
-
+=> a.mul(2).push().add(b).mul(3).add(); // can be written a.mul(2,0).push().add(b).mul(3,0).add()
+```
+```
 a = c / (a + b);
-a.add(b).swap(c).div();
-
+=> a.add(b).swap(c).div();
+```
 ## Function that performs s**2/(s**3 - a**3):
 ```
 function func(real, imag, a){ // Re(s) = real, Im(s) = imag
