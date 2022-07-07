@@ -28,3 +28,26 @@ function func(real, imag, a){ // Re(s) = real, Im(s) = imag
     return s3;
 }
 ```
+## operations
+```
+add  +
+sub  -
+mul  *
+div  /
+sqrt square root
+conj conjugation
+neg  negation
+abs  absolute (returns number, not complex)
+sin  sine
+cos  cosine
+exp  exponential
+log  logarithm
+pow  b-th power of a
+push push to the stack
+swap push to the stack and replace top of the stack by parameter
+dup  push to thea stack, keep the top of the stack
+pop  pop (discard) from top of the stack
+print print complex
+println print complex with new-line
+```
+
