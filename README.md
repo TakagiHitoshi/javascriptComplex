@@ -17,7 +17,7 @@ a = a * 2 + b * 3;
 a = c / (a + b);
 => a.add(b).swap(c).div();
 ```
-## Function that performs <img src="https://www.codecogs.com/eqnedit.php?latex=%5Cfrac%7Bs%5E%7B2%7D%7D%7Bs%5E%7B3%7D%20-%20a%5E%7B3%7D%7D#0 />:
+## Function that performs <img src="https://latex.codecogs.com/gif.latex?\frac{s^{2}}{s^{3}-a^{3}}" />:
 ```
 function func(real, imag, a){ // Re(s) = real, Im(s) = imag
     let aa = a ** 3;
