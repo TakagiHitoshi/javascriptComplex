@@ -77,7 +77,7 @@ comp.prototype = {
     sqrt: function(){
 	let r = Math.sqrt(this.real * this.real + this.imag * this.imag);
 	const re = Math.sqrt((r + this.real) / 2);
-	const im = Math.sign(this.imag) * Math.sqrt((r - this.real) / 2);
+	const im = (this.imag < 0 ? -1 : 1) * Math.sqrt((r - this.real) / 2);
 	this.real = re; this.imag = im;
 	return this;
     },
